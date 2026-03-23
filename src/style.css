@@ -812,3 +812,19 @@ label span {
 .behavior-tag {
   backdrop-filter: blur(4px);
 }
+
+.milestone-banner {
+  margin: 0 0 14px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgba(113, 199, 255, 0.1);
+  border: 1px solid rgba(113, 199, 255, 0.26);
+  color: #d7f1ff;
+  font-size: 13px;
+}
+
+@media (max-width: 900px) {
+  .chip-row { gap: 8px; }
+  .chip, .btn.small-btn { width: 100%; justify-content: center; }
+  .verdict-preview p { line-height: 1.65; }
+}

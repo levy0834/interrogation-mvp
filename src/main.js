@@ -233,7 +233,8 @@ function addClue(id) {
   const isNew = !state.discoveredClues.includes(id)
   if (isNew) {
     state.discoveredClues.push(id)
-    state.toast = `新线索已锁定：${clueById(id)?.title || id}`
+    const closedNow = investigationChains().filter((chain) => chain.done === chain.clues.length)
+    state.toast = closedNow.length ? `主链闭合：${closedNow.map((item) => item.title).join(' / ')}` : `新线索已锁定：${clueById(id)?.title || id}`
   }
 }
 
@@ -318,6 +319,7 @@ function buildSuspectSystemPrompt(suspect, s, context) {
 
 你的身份：${suspect.role}
 人物气质：${suspect.vibe}
+说话风格：${suspect.id === 'lin' ? '火气重、嘴硬、短句、容易顶人' : suspect.id === 'xu' ? '冷、克制、短句、经常只说半句真话' : '体面、压人、像在教育别人、越危险越平静'}
 当前状态：压力 ${s.stress}/100，防御 ${s.guard}/100，配合 ${s.attitude}/100，阶段 ${s.phase}
 
 案件背景：雨夜坠楼案。死者周岚是调查记者，正在追查医药公司违规试药。你与她在案发当晚有接触。
@@ -866,6 +868,7 @@ function renderInvestigation() {
       <section class="dialogue-panel">
         <div class="panel-title">审讯记录</div>
         ${state.activeLead ? `<div class="hit-banner">已锁定破绽：${(availableLeads().find((item) => item.id === state.activeLead)?.label || "正在深挖关键矛盾")}</div>` : ""}
+        ${investigationChains().filter((chain) => chain.done === chain.clues.length).length ? `<div class="milestone-banner">已闭合主链：${investigationChains().filter((chain) => chain.done === chain.clues.length).map((chain) => chain.title).join(' / ')}</div>` : ''}
         <div class="log-stream">
           ${state.statementLog.length ? state.statementLog.map((entry) => `
             <article class="log-card ${entry.kind}">
