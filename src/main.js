@@ -183,11 +183,11 @@ ${result.text}`)
 
 function failureReview() {
   const missing = caseData.ending.required.filter((id) => !state.accusation.evidenceIds.includes(id))
-  if (!missing.length && state.accusation.culprit === caseData.ending.culprit) return '你已经摸到真相边缘，缺的是把作案逻辑说得更狠、更完整。'
-  if (missing.includes('evi_doorlog')) return '你最缺的是时间线。回去继续压陈默的门禁记录，把“22点前离开”的口供打穿。'
-  if (missing.includes('evi_shoeprint')) return '你还没把现场痕迹锁死。继续围绕阳台、鞋印和擦痕做文章。'
-  if (missing.includes('evi_backup')) return '你错过了最值钱的认知破绽。想办法逼出“他为什么知道录音不在电脑里”。'
-  return '你的结论还不够硬。回头检查时间线、现场痕迹和录音三条线是不是都闭环了。'
+  if (!missing.length && state.accusation.culprit === caseData.ending.culprit) return '你已经摸到真相边缘，缺的是把作案逻辑说得更狠、更完整。再来一轮时，记得把“为什么是伪装现场”说死。'
+  if (missing.includes('evi_doorlog')) return '你最缺的是时间线。下轮先别急着结案，先把陈默 21:42 到 22:18 这段停留时间狠狠干穿。'
+  if (missing.includes('evi_shoeprint')) return '你还没把现场痕迹锁死。下轮优先围绕阳台、鞋印和擦痕推进，不要只盯口供。'
+  if (missing.includes('evi_backup')) return '你错过了最值钱的认知破绽。下轮必须逼出那句“他为什么知道录音不在电脑里”。'
+  return '你的结论还不够硬。回头检查时间线、现场痕迹和录音三条线是不是都闭环了，再来一轮会更稳。'
 }
 
 const evidenceReactions = {
@@ -398,6 +398,22 @@ function hasBreakthrough(suspectId, key) {
   return suspectState[suspectId].breakthroughs.includes(key)
 }
 
+function roleSpecificLine(suspect, topicId, phase) {
+  if (suspect.id === 'lin') {
+    if (topicId === 'relationship' && phase !== '冷静') return '你们爱把旧情翻出来，可她真正惹到的人，从来不止我一个。'
+    if (topicId === 'motive' && phase === '崩溃') return '我当然想砸她那篇稿，可真要把她逼到阳台边的人，根本不是我这种脾气。'
+  }
+  if (suspect.id === 'xu') {
+    if (topicId === 'timeline' && phase !== '冷静') return '我在楼下等，不是因为犹豫，是因为我知道楼上那场谈判不会干净结束。'
+    if (topicId === 'motive' && phase === '崩溃') return '我怕的从来不是她死，是有人会把她的死也包装成可控代价。你该去问最擅长做这种事的人。'
+  }
+  if (suspect.id === 'chen') {
+    if (topicId === 'relationship' && phase === '防御') return '周岚把自己当成点火的人，却没想过火势烧起来后谁来收场。'
+    if (topicId === 'motive' && phase !== '冷静') return '你们总把“愿意处理问题的人”想成制造问题的人，这是很幼稚的误判。'
+  }
+  return ''
+}
+
 async function askTopic(topicId) {
   const suspect = suspectById(state.currentSuspectId)
   const s = suspectState[suspect.id]
@@ -424,9 +440,7 @@ async function askTopic(topicId) {
       reply = '你们以为抓住时间就够了？她当时还活着，只是……她不该拿那些东西威胁我。'
       addBreakthrough(suspect.id, 'timeline')
     }
-    if (suspect.id === 'lin' && topicId === 'relationship' && s.phase !== '冷静') reply = '你们总喜欢把旧情说成动机。她是刺人，但不是谁都舍得真把她推下去。'
-    if (suspect.id === 'xu' && topicId === 'motive' && s.phase !== '冷静') reply = '我怕的是平台一起沉，不是她一个人的情绪。你如果听不懂区别，我也没办法。'
-    if (suspect.id === 'chen' && topicId === 'relationship' && s.phase === '防御') reply = '我和她之间不是私人恩怨，而是成年人之间对代价的理解差异。'
+    reply = roleSpecificLine(suspect, topicId, s.phase) || reply
   }
 
   s.asked.push(topicId)
@@ -500,10 +514,10 @@ function pressureSuspect() {
 
   const text = s.phase === '崩溃'
     ? suspect.id === 'lin'
-      ? `${suspect.name}猛地咬住后槽牙，情绪已经压不住了。再逼一步，他就会失控。`
+      ? `${suspect.name}猛地咬住后槽牙，开始把矛头往陈默身上甩："你们怎么不去问那个最会装体面的人？"`
       : suspect.id === 'xu'
-        ? `${suspect.name}停顿得有些过久，像是在重新编辑自己的说法。她开始不稳了。`
-        : `${suspect.name}沉默了数秒，呼吸依旧克制，但每个停顿都比刚才更危险。你知道他快撑不住了。`
+        ? `${suspect.name}停顿得过久，终于低声说："楼上那晚最危险的人，从来不是最吵的那个。"`
+        : `${suspect.name}沉默了数秒，依旧克制，却第一次露出不耐："你们是不是已经被另外两个人的情绪表演骗够了？"`
     : suspect.id === 'lin'
       ? `${suspect.name}把视线别开，语气已经带火。`
       : suspect.id === 'xu'
@@ -663,6 +677,7 @@ function renderHome() {
       <p class="lead">${caseData.intro}</p>
       ${renderAISettings()}
       ${renderProgressStrip()}
+      ${renderChainOverview()}
       ${renderOnboarding()}
       <div class="hero-grid">
         <div class="panel highlight">
@@ -709,6 +724,46 @@ function getDeductionHints() {
   if (state.discoveredClues.includes('evi_lens')) hints.push('林骁像是情绪噪音最大的人，但现场真正危险的克制感不太像他。')
   if (!hints.length) hints.push('先把陈默逼到“动摇”，门禁和阳台两条线才会冒出来。')
   return hints
+}
+
+function investigationChains() {
+  return [
+    {
+      id: 'timeline',
+      title: '时间线链',
+      summary: '谁在 22 点后还留在现场',
+      clues: ['evi_doorlog', 'evi_neighbor'],
+      done: ['evi_doorlog', 'evi_neighbor'].filter((id) => state.discoveredClues.includes(id)).length
+    },
+    {
+      id: 'scene',
+      title: '现场链',
+      summary: '坠楼究竟是失足还是推搡伪装',
+      clues: ['evi_balcony', 'evi_shoeprint'],
+      done: ['evi_balcony', 'evi_shoeprint'].filter((id) => state.discoveredClues.includes(id)).length
+    },
+    {
+      id: 'knowledge',
+      title: '认知链',
+      summary: '谁知道了不该知道的事',
+      clues: ['evi_mail', 'evi_backup'],
+      done: ['evi_mail', 'evi_backup'].filter((id) => state.discoveredClues.includes(id)).length
+    }
+  ]
+}
+
+function renderChainOverview() {
+  return `
+    <section class="chain-overview">
+      ${investigationChains().map((chain) => `
+        <article class="chain-card ${chain.done === chain.clues.length ? 'done' : ''}">
+          <div class="panel-title">${chain.title}</div>
+          <p>${chain.summary}</p>
+          <div class="chain-meta">${chain.done}/${chain.clues.length} 已闭合</div>
+        </article>
+      `).join('')}
+    </section>
+  `
 }
 
 function renderProgressStrip() {
@@ -782,6 +837,7 @@ function renderInvestigation() {
     ${renderTopbar()}
     ${renderAISettings()}
     ${renderProgressStrip()}
+    ${renderChainOverview()}
     <section class="main-layout">
       <aside class="suspect-panel">
         <div class="portrait">${suspect.name.slice(0, 1)}</div>
@@ -866,6 +922,7 @@ function renderClueBoard() {
   return `
     ${renderTopbar()}
     ${renderProgressStrip()}
+    ${renderChainOverview()}
     <section class="board-layout">
       <div class="section-head">
         <div>
@@ -877,6 +934,7 @@ function renderClueBoard() {
       <div class="deduction-section">
         <div class="panel-title">证据关联</div>
         ${renderClueLinks()}
+        <div class="inline-tip">还没闭合的链：${investigationChains().filter((c) => c.done < c.clues.length).map((c) => c.title).join(' / ') || '已全部闭合，可以收网。'}</div>
       </div>
       <div class="clue-grid">
         ${state.discoveredClues.map((id) => {
@@ -974,6 +1032,7 @@ function renderEnding() {
       <div class="panel large recap-panel">
         <div class="panel-title">审讯回放</div>
         <p>你真正完成的不是一次选择题，而是把三条分散的线索压成了一条证据链：时间线说谎、现场痕迹、认知失言。</p>
+        <div class="ending-quote">“真正的凶手，知道了不该知道的事。”</div>
       </div>
       <div class="panel large chain-panel">
         <div class="panel-title">关键证据链</div>

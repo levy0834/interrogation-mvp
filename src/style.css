@@ -738,3 +738,69 @@ label span {
 .log-card.probe {
   border-color: rgba(113, 199, 255, 0.24);
 }
+
+.chain-overview {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.chain-card {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 16px;
+  background: rgba(255,255,255,0.03);
+}
+
+.chain-card.done {
+  border-color: rgba(113, 199, 255, 0.35);
+  background: rgba(113, 199, 255, 0.08);
+}
+
+.chain-card p {
+  margin: 8px 0;
+  color: var(--soft);
+}
+
+.chain-meta {
+  color: var(--gold);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+}
+
+.ending-quote {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-left: 3px solid rgba(248, 212, 139, 0.55);
+  color: #f5e6b3;
+  background: rgba(248, 212, 139, 0.06);
+  border-radius: 10px;
+}
+
+@media (max-width: 900px) {
+  .chain-overview { grid-template-columns: 1fr; }
+}
+
+.closing-check {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 12px 0 4px;
+}
+
+.closing-check span {
+  display: inline-flex;
+  padding: 8px 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--line);
+  color: var(--soft);
+  font-size: 12px;
+}
+
+.closing-check span.ok {
+  border-color: rgba(113, 199, 255, 0.35);
+  background: rgba(113, 199, 255, 0.1);
+  color: #d7f1ff;
+}
