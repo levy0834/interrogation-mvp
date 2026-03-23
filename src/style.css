@@ -804,3 +804,11 @@ label span {
   background: rgba(113, 199, 255, 0.1);
   color: #d7f1ff;
 }
+
+.chain-card.done .chain-meta {
+  color: #d7f1ff;
+}
+
+.behavior-tag {
+  backdrop-filter: blur(4px);
+}

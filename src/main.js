@@ -660,11 +660,13 @@ function renderOnboarding() {
 function renderVerdictPreview() {
   const picked = state.accusation.evidenceIds.map((id) => clueById(id)?.title).filter(Boolean)
   if (!picked.length && !state.accusation.culprit && !state.accusation.method) return ''
+  const closed = investigationChains().filter((chain) => chain.done === chain.clues.length).length
   return `
     <div class="verdict-preview">
       <div class="panel-title">指控预演</div>
       <p>你准备把矛头指向 <strong>${state.accusation.culprit ? suspectById(state.accusation.culprit)?.name : '——'}</strong>，并主张 <strong>${state.accusation.method || '——'}</strong>。</p>
       <p>你手上的核心证据：${picked.length ? picked.join(' / ') : '——'}</p>
+      <p>当前已闭合 <strong>${closed}/3</strong> 条主链。精品结案至少该让 2 条链硬起来。</p>
     </div>
   `
 }
@@ -822,9 +824,9 @@ function renderTopbar() {
 
 function deriveBehaviorTag(suspectId) {
   const s = suspectState[suspectId]
-  if (s.phase === '崩溃') return '松口边缘'
+  if (s.phase === '崩溃') return suspectId === 'chen' ? '危险沉默' : '松口边缘'
   if (s.guard <= 24) return '失言风险'
-  if (s.stress >= 60) return '情绪失衡'
+  if (s.stress >= 60) return suspectId === 'lin' ? '情绪失衡' : '压抑过载'
   if (s.attitude <= 30) return '反咬调查'
   if (s.phase === '防御') return '高度回避'
   return '表面镇定'
