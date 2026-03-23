@@ -137,7 +137,8 @@ const state = {
   aiBusy: false,
   aiTesting: false,
   aiError: '',
-  aiTestResult: ''
+  aiTestResult: '',
+  activeLead: ''
 }
 
 const topics = [
@@ -145,6 +146,49 @@ const topics = [
   { id: 'timeline', label: '案发当晚你的行程是什么？' },
   { id: 'motive', label: '你为什么会出现在她家附近？' }
 ]
+
+const leads = {
+  lin: [
+    { id: 'lin_timeline', label: '追问：你为什么一直强调自己走得早？', unlockWhen: () => suspectState.lin.phase !== '冷静', effect: () => ({ text: '林骁烦躁地啧了一声：“因为我知道你们就盯着时间不放。可我说了，吵归吵，我没碰阳台。”', stress: 10, guard: -8, clue: null }) }
+  ],
+  xu: [
+    { id: 'xu_wait', label: '追问：你在楼下到底等谁？', unlockWhen: () => state.discoveredClues.includes('evi_coffee'), effect: () => ({ text: '许薇垂下眼：“我在等她改主意，也在等别人先出手……这回答你满意吗？”', stress: 9, guard: -8, clue: null }) }
+  ],
+  chen: [
+    { id: 'chen_doorlog', label: '追问：21:42 上楼到 22:18 离开，这中间你在做什么？', unlockWhen: () => state.discoveredClues.includes('evi_doorlog'), effect: () => ({ text: '陈默停顿半秒：“你把时间记得这么死，只会暴露你手里没别的东西。” 但他这次没再重复“22点前离开”。', stress: 16, guard: -10, clue: 'evi_shoeprint' }) },
+    { id: 'chen_backup', label: '追问：你为什么会知道录音不在电脑里？', unlockWhen: () => state.discoveredClues.includes('evi_backup'), effect: () => ({ text: '陈默目光第一次真正冷了下去：“我说的是常识判断。” 这句辩解太快，快得像掩饰。', stress: 20, guard: -12, clue: null }) }
+  ]
+}
+
+function availableLeads() {
+  return (leads[state.currentSuspectId] || []).filter((item) => item.unlockWhen())
+}
+
+function pursueLead(leadId) {
+  const suspect = suspectById(state.currentSuspectId)
+  const s = suspectState[suspect.id]
+  const lead = availableLeads().find((item) => item.id === leadId)
+  if (!lead) return
+  const result = lead.effect()
+  s.stress = Math.min(100, s.stress + result.stress)
+  s.guard = Math.max(0, s.guard + result.guard)
+  updatePhase(s)
+  if (result.clue) addClue(result.clue)
+  state.activeLead = leadId
+  addLog(suspect.id, 'lead', `${lead.label}
+${result.text}`)
+  toast('你抓住了一个正在扩大的破绽')
+  render()
+}
+
+function failureReview() {
+  const missing = caseData.ending.required.filter((id) => !state.accusation.evidenceIds.includes(id))
+  if (!missing.length && state.accusation.culprit === caseData.ending.culprit) return '你已经摸到真相边缘，缺的是把作案逻辑说得更狠、更完整。'
+  if (missing.includes('evi_doorlog')) return '你最缺的是时间线。回去继续压陈默的门禁记录，把“22点前离开”的口供打穿。'
+  if (missing.includes('evi_shoeprint')) return '你还没把现场痕迹锁死。继续围绕阳台、鞋印和擦痕做文章。'
+  if (missing.includes('evi_backup')) return '你错过了最值钱的认知破绽。想办法逼出“他为什么知道录音不在电脑里”。'
+  return '你的结论还不够硬。回头检查时间线、现场痕迹和录音三条线是不是都闭环了。'
+}
 
 const evidenceReactions = {
   lin: {
@@ -452,6 +496,7 @@ function submitAccusation() {
     body = '你锁定了陈默，也抓住了核心证据，但作案逻辑没有完全讲清。案件依然成立，只是少了那记最重的落锤。'
   }
 
+  if (verdict === '失败') body = `${body} ${failureReview()}`
   state.outcome = { verdict, title, body }
   state.screen = 'ending'
   render()
@@ -693,6 +738,12 @@ function renderInvestigation() {
             </div>
           </div>
           <div class="action-group">
+            <div class="panel-title small">追问破绽</div>
+            <div class="chip-row">
+              ${availableLeads().length ? availableLeads().map((lead) => `<button class="chip lead-chip" data-action="pursue-lead" data-id="${lead.id}">${lead.label}</button>`).join('') : '<span class="inline-tip">先逼出口供裂缝，追问选项才会出现。</span>'}
+            </div>
+          </div>
+          <div class="action-group">
             <div class="panel-title small">施压</div>
             <button class="btn secondary" data-action="pressure">连续追问，逼他露口风</button>
           </div>
@@ -909,6 +960,7 @@ function bindEvents() {
       if (action === 'go-close' && isReadyToClose()) state.screen = 'close'
       if (action === 'ask-topic') await askTopic(id)
       if (action === 'free-ask') await freeAskAI()
+      if (action === 'pursue-lead') pursueLead(id)
       if (action === 'pressure') pressureSuspect()
       if (action === 'present-evidence') presentEvidence(id)
       if (action === 'choose-culprit') state.accusation.culprit = id

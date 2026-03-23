@@ -672,3 +672,17 @@ label span {
   color: var(--soft);
   font-size: 12px;
 }
+
+.lead-chip {
+  background: rgba(248, 212, 139, 0.08);
+}
+
+.inline-tip {
+  color: var(--muted);
+  font-size: 13px;
+  padding: 8px 2px;
+}
+
+.log-card.lead {
+  border-color: rgba(248, 212, 139, 0.34);
+}
