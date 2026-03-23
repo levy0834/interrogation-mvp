@@ -364,7 +364,8 @@ async function freeAskAI() {
   const s = suspectState[suspect.id]
   const input = document.querySelector('#free-ask-input')?.value?.trim()
   if (!input) return toast('先写一句你想追问的话')
-  if (!hasUsableAIConfig()) return toast('先在上方填好 AI 配置再启用 AI 审讯')
+  if (!aiConfig.enabled) return toast('先打开 AI 审讯')
+  if (!hasUsableAIConfig()) return toast('当前 AI 接口暂不可用，先点一下测试连接看看')
 
   state.aiBusy = true
   state.aiError = ''
@@ -1135,13 +1136,6 @@ function bindEvents() {
     el.addEventListener('click', async () => {
       const { action, id } = el.dataset
       if (action === 'toggle-ai-panel') state.aiOpen = !state.aiOpen
-      if (action === 'save-ai-config') {
-        readAIForm()
-        saveAIConfig()
-        state.aiError = ''
-        state.aiTestResult = ''
-        toast(DEPLOY_MODE === 'proxy' ? '已切换为仅使用服务端环境变量' : 'AI 配置已保存在本机浏览器')
-      }
       if (action === 'test-ai-connection') await testAIConnection()
       if (action === 'pick-suspect') state.currentSuspectId = id
       if (action === 'start') state.screen = 'investigation'
