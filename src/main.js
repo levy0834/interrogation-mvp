@@ -488,6 +488,7 @@ function renderHome() {
       <h1>${caseData.title}</h1>
       <p class="lead">${caseData.intro}</p>
       ${renderAISettings()}
+      ${renderProgressStrip()}
       <div class="hero-grid">
         <div class="panel highlight">
           <div class="panel-title">死者档案</div>
@@ -518,6 +519,58 @@ function renderHome() {
   `
 }
 
+function getCaseProgress() {
+  const keyFound = caseData.ending.required.filter((id) => state.discoveredClues.includes(id)).length
+  const total = caseData.ending.required.length
+  return Math.round((keyFound / total) * 100)
+}
+
+function getDeductionHints() {
+  const hints = []
+  if (state.discoveredClues.includes('evi_doorlog')) hints.push('时间线开始松动：陈默的离开时间和自述不一致。')
+  if (state.discoveredClues.includes('evi_shoeprint')) hints.push('现场指向阳台：鞋印把“不是意外”往前推了一步。')
+  if (state.discoveredClues.includes('evi_backup')) hints.push('认知破绽出现：有人知道录音不在电脑里。')
+  if (!hints.length) hints.push('先把陈默逼到“动摇”，门禁和阳台两条线才会冒出来。')
+  return hints
+}
+
+function renderProgressStrip() {
+  const progress = getCaseProgress()
+  const hints = getDeductionHints()
+  return `
+    <section class="progress-strip">
+      <div class="progress-card">
+        <div class="panel-title">破案进度</div>
+        <div class="progress-line"><span style="width:${progress}%"></span></div>
+        <div class="progress-meta">
+          <strong>${progress}%</strong>
+          <span>关键证据 ${caseData.ending.required.filter((id) => state.discoveredClues.includes(id)).length}/${caseData.ending.required.length}</span>
+        </div>
+      </div>
+      <div class="progress-card hint-card">
+        <div class="panel-title">推理提示</div>
+        <ul>${hints.map((h) => `<li>${h}</li>`).join('')}</ul>
+      </div>
+    </section>
+  `
+}
+
+function renderClueLinks() {
+  const links = [
+    ['evi_doorlog', 'evi_neighbor', '门禁记录 + 邻居证词 → 22 点后仍有男声争执，陈默时间口供最危险。'],
+    ['evi_shoeprint', 'evi_balcony', '鞋印比对 + 阳台擦痕 → 更像推搡后的伪装现场，不像单纯失足。'],
+    ['evi_backup', 'evi_mail', '云端备份 + 未发出的调查稿 → 凶手试图阻断资料，但并未完全得手。']
+  ]
+  const unlocked = links.filter(([a,b]) => state.discoveredClues.includes(a) && state.discoveredClues.includes(b))
+  if (!unlocked.length) return '<div class="empty-state compact">找到能互相印证的两条证据后，这里会自动形成推理链。</div>'
+  return unlocked.map(([a,b,text]) => `
+    <article class="deduction-link">
+      <div class="deduction-tags"><span>${clueById(a).title}</span><span>${clueById(b).title}</span></div>
+      <p>${text}</p>
+    </article>
+  `).join('')
+}
+
 function renderTopbar() {
   const ready = isReadyToClose()
   return `
@@ -541,6 +594,7 @@ function renderInvestigation() {
   return `
     ${renderTopbar()}
     ${renderAISettings()}
+    ${renderProgressStrip()}
     <section class="main-layout">
       <aside class="suspect-panel">
         <div class="portrait">${suspect.name.slice(0, 1)}</div>
@@ -554,6 +608,10 @@ function renderInvestigation() {
           <div><span>配合</span><strong>${s.attitude}</strong></div>
         </div>
         <div class="note-box">${suspect.vibe}</div>
+        <div class="objective-box">
+          <div class="panel-title small">当前目标</div>
+          <p>${suspect.id === 'chen' ? '盯住时间线、阳台、录音去逼出失言。' : '先把外围人物口供压实，再回头击穿陈默。'}</p>
+        </div>
         <div class="switch-list">
           ${caseData.suspects.map((item) => `
             <button class="switch-btn ${item.id === suspect.id ? 'active' : ''}" data-action="pick-suspect" data-id="${item.id}">${item.name}</button>
@@ -606,6 +664,7 @@ function renderInvestigation() {
 function renderClueBoard() {
   return `
     ${renderTopbar()}
+    ${renderProgressStrip()}
     <section class="board-layout">
       <div class="section-head">
         <div>
@@ -613,6 +672,10 @@ function renderClueBoard() {
           <h3>已取得 ${state.discoveredClues.length} 条线索</h3>
         </div>
         <button class="btn ghost" data-action="go-investigation">返回审讯</button>
+      </div>
+      <div class="deduction-section">
+        <div class="panel-title">证据关联</div>
+        ${renderClueLinks()}
       </div>
       <div class="clue-grid">
         ${state.discoveredClues.map((id) => {

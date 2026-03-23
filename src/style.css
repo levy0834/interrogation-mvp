@@ -512,3 +512,83 @@ label span {
   .log-stream { max-height: none; }
   .meter-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
+
+.progress-strip {
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  gap: 16px;
+  margin: 18px 0 22px;
+}
+
+.progress-card,
+.deduction-section,
+.objective-box,
+.deduction-link {
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,0.03);
+  border-radius: 18px;
+  padding: 16px;
+}
+
+.progress-line {
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.06);
+  overflow: hidden;
+  margin: 10px 0 8px;
+}
+
+.progress-line span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(113, 199, 255, 0.9), rgba(248, 212, 139, 0.92));
+}
+
+.progress-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--muted);
+}
+
+.hint-card ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  color: var(--soft);
+}
+
+.objective-box {
+  margin-bottom: 12px;
+}
+.objective-box p,
+.deduction-link p { margin: 8px 0 0; color: var(--soft); }
+
+.deduction-section {
+  margin-bottom: 16px;
+}
+
+.deduction-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.deduction-tags span {
+  display: inline-flex;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(113, 199, 255, 0.1);
+  border: 1px solid rgba(113, 199, 255, 0.18);
+  color: var(--soft);
+  font-size: 12px;
+}
+
+.empty-state.compact {
+  min-height: auto;
+  padding: 18px;
+}
+
+@media (max-width: 900px) {
+  .progress-strip { grid-template-columns: 1fr; }
+}
