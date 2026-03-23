@@ -592,3 +592,56 @@ label span {
 @media (max-width: 900px) {
   .progress-strip { grid-template-columns: 1fr; }
 }
+
+.onboarding-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.onboarding-card,
+.verdict-preview,
+.recap-panel {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(255,255,255,0.03);
+  padding: 16px;
+}
+
+.onboarding-card {
+  display: flex;
+  gap: 12px;
+}
+
+.onboarding-card span {
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: rgba(113, 199, 255, 0.14);
+  color: var(--gold);
+  font-weight: 700;
+  flex: none;
+}
+
+.onboarding-card strong,
+.verdict-preview strong {
+  color: var(--text);
+}
+
+.onboarding-card p,
+.verdict-preview p,
+.recap-panel p {
+  margin: 6px 0 0;
+  color: var(--soft);
+}
+
+.verdict-preview {
+  margin-top: 18px;
+}
+
+@media (max-width: 900px) {
+  .onboarding-strip { grid-template-columns: 1fr; }
+}

@@ -377,8 +377,16 @@ function pressureSuspect() {
   updatePhase(s)
 
   const text = s.phase === '崩溃'
-    ? `${suspect.name}沉默了数秒，呼吸明显乱了。你能感觉到，他的说法开始撑不住了。`
-    : `${suspect.name}避开了你的视线，但语气明显硬了起来。`
+    ? suspect.id === 'lin'
+      ? `${suspect.name}猛地咬住后槽牙，情绪已经压不住了。再逼一步，他就会失控。`
+      : suspect.id === 'xu'
+        ? `${suspect.name}停顿得有些过久，像是在重新编辑自己的说法。她开始不稳了。`
+        : `${suspect.name}沉默了数秒，呼吸依旧克制，但每个停顿都比刚才更危险。你知道他快撑不住了。`
+    : suspect.id === 'lin'
+      ? `${suspect.name}把视线别开，语气已经带火。`
+      : suspect.id === 'xu'
+        ? `${suspect.name}神情没变，但回话明显更谨慎了。`
+        : `${suspect.name}仍然维持体面，可那层从容已经开始裂。`
 
   addLog(suspect.id, 'pressure', text)
   if (suspect.id === 'chen' && s.phase !== '冷静') addClue('evi_shoeprint')
@@ -481,6 +489,47 @@ function renderAISettings() {
   `
 }
 
+function renderOnboarding() {
+  if (state.screen !== 'home') return ''
+  return `
+    <section class="onboarding-strip">
+      <article class="onboarding-card">
+        <span>01</span>
+        <div>
+          <strong>先压外围口供</strong>
+          <p>先摸清林骁和许薇的时间线，把“谁没上楼、谁在附近徘徊”压实。</p>
+        </div>
+      </article>
+      <article class="onboarding-card">
+        <span>02</span>
+        <div>
+          <strong>再回头击穿陈默</strong>
+          <p>盯住门禁、阳台、录音去问，陈默最怕你把这三条线串起来。</p>
+        </div>
+      </article>
+      <article class="onboarding-card">
+        <span>03</span>
+        <div>
+          <strong>最后锁定指控</strong>
+          <p>只要时间线、现场鞋印、录音认知破绽闭环，指控就能落地。</p>
+        </div>
+      </article>
+    </section>
+  `
+}
+
+function renderVerdictPreview() {
+  const picked = state.accusation.evidenceIds.map((id) => clueById(id)?.title).filter(Boolean)
+  if (!picked.length && !state.accusation.culprit && !state.accusation.method) return ''
+  return `
+    <div class="verdict-preview">
+      <div class="panel-title">指控预演</div>
+      <p>你准备把矛头指向 <strong>${state.accusation.culprit ? suspectById(state.accusation.culprit)?.name : '——'}</strong>，并主张 <strong>${state.accusation.method || '——'}</strong>。</p>
+      <p>你手上的核心证据：${picked.length ? picked.join(' / ') : '——'}</p>
+    </div>
+  `
+}
+
 function renderHome() {
   return `
     <section class="hero-shell">
@@ -489,6 +538,7 @@ function renderHome() {
       <p class="lead">${caseData.intro}</p>
       ${renderAISettings()}
       ${renderProgressStrip()}
+      ${renderOnboarding()}
       <div class="hero-grid">
         <div class="panel highlight">
           <div class="panel-title">死者档案</div>
@@ -742,6 +792,7 @@ function renderCloseCase() {
             }).join('')}
           </div>
         </div>
+        ${renderVerdictPreview()}
         <div class="cta-row left">
           <button class="btn ghost" data-action="go-investigation">返回补证</button>
           <button class="btn primary" data-action="submit-case">锁定指控</button>
@@ -758,6 +809,10 @@ function renderEnding() {
       <h1>${state.outcome.title}</h1>
       <div class="verdict">${state.outcome.verdict}</div>
       <p class="lead">${state.outcome.body}</p>
+      <div class="panel large recap-panel">
+        <div class="panel-title">审讯回放</div>
+        <p>你真正完成的不是一次选择题，而是把三条分散的线索压成了一条证据链：时间线说谎、现场痕迹、认知失言。</p>
+      </div>
       <div class="panel large">
         <div class="panel-title">标准答案</div>
         <ul>
