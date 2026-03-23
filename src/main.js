@@ -618,18 +618,13 @@ function renderAISettings() {
       </div>
       ${state.aiOpen ? `
         <div class="ai-form">
-          <div class="mini-grid">
-            <label><span>当前模式</span><input value="Vercel 服务端代理" disabled /></label>
-            <label><span>AI 状态</span><input value="${aiConfig.enabled ? '已启用' : '已停用'}" disabled /></label>
-          </div>
+          <div class="form-tip">上游 URL、API Key、默认模型都已转移到服务端环境变量，前端不再暴露这些配置。</div>
           <div class="toggle-row wrap-row">
             <label class="checkbox-row"><input id="ai-enabled" type="checkbox" ${aiConfig.enabled ? 'checked' : ''}/> <span>启用 AI 审讯</span></label>
             <div class="btn-row">
-              <button class="btn secondary small-btn" data-action="save-ai-config">保存偏好</button>
               <button class="btn ghost small-btn" data-action="test-ai-connection">${state.aiTesting ? '测试中…' : '测试连接'}</button>
             </div>
           </div>
-          <div class="form-tip">上游 URL、API Key、默认模型都已转移到服务端环境变量，前端不再暴露这些配置。</div>
           ${state.aiTestResult ? `<div class="ai-test-result">${state.aiTestResult}</div>` : ''}
           ${state.aiError ? `<div class="ai-error">${state.aiError}</div>` : ''}
         </div>
