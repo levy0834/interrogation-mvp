@@ -22,6 +22,7 @@ const caseData = {
       role: '前男友 / 自由摄影师',
       vibe: '冲动、嘴硬、情绪不稳',
       portrait: '旧情纠葛',
+      visual: '冷硬侧光 / 旧伤感 / 摄影师气质',
       initial: { attitude: 46, stress: 34, guard: 58 },
       confession: {
         relationship: '她最近越来越疯，见谁都像在审犯人。我们吵过，但不代表我会杀她。',
@@ -45,6 +46,7 @@ const caseData = {
       role: '同事 / 新闻平台编辑',
       vibe: '理性、克制、回避责任',
       portrait: '冷静型误导',
+      visual: '利落短发 / 冷色阴影 / 编辑部锋利感',
       initial: { attitude: 61, stress: 22, guard: 42 },
       confession: {
         relationship: '周岚太激进了。我们只是对稿件发布节奏有分歧。',
@@ -68,6 +70,7 @@ const caseData = {
       role: '医药公司法务负责人',
       vibe: '温和、克制、掌控欲强',
       portrait: '最体面，也最危险',
+      visual: '深色西装 / 克制目光 / 法务式压迫感',
       initial: { attitude: 55, stress: 20, guard: 64 },
       confession: {
         relationship: '我只是代表公司和她谈和解。我希望事情不要闹到无法收场。',
@@ -682,6 +685,20 @@ function renderHome() {
       ${renderAISettings()}
       ${renderProgressStrip()}
       ${renderChainOverview()}
+      <section class="character-showcase">
+        ${caseData.suspects.map((suspect) => `
+          <article class="character-card panel">
+            <div class="character-portrait ${suspect.id}">${suspect.name[0]}</div>
+            <div class="character-copy">
+              <div class="panel-title">${suspect.name}</div>
+              <div class="log-meta">${suspect.role}</div>
+              <p>${suspect.vibe}</p>
+              <div class="character-tagline">${suspect.portrait}</div>
+              <div class="character-visual">参考图方向：${suspect.visual}</div>
+            </div>
+          </article>
+        `).join('')}
+      </section>
       ${renderOnboarding()}
       <div class="hero-grid">
         <div class="panel highlight">
