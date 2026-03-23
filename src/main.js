@@ -454,20 +454,16 @@ function renderAISettings() {
     <div class="ai-panel ${state.aiOpen ? 'open' : ''}">
       <div class="ai-head">
         <div>
-          <div class="panel-title">AI 审讯模式</div>
-          <strong>${hasUsableAIConfig() ? '已接入服务端代理，用户无需填写密钥' : '当前回退为规则模式'}</strong>
+          <div class="panel-title">AI 审讯已接通</div>
+          <strong>${aiConfig.enabled ? '模型与密钥由服务端托管，用户无需配置' : '当前已切回规则模式'}</strong>
         </div>
-        <button class="btn ghost small-btn" data-action="toggle-ai-panel">${state.aiOpen ? '收起' : '查看状态'}</button>
+        <button class="btn ghost small-btn" data-action="toggle-ai-panel">${state.aiOpen ? '收起状态' : '查看状态'}</button>
       </div>
       ${state.aiOpen ? `
         <div class="ai-form">
           <div class="mini-grid">
-            <label><span>当前模式</span><input value="Vercel 代理" disabled /></label>
-            <label><span>默认模型</span><input id="ai-model" value="${escapeAttr(aiConfig.model)}" /></label>
-          </div>
-          <div class="mini-grid">
-            <label><span>Temperature</span><input id="ai-temperature" value="${escapeAttr(aiConfig.temperature)}" /></label>
-            <label><span>Max tokens</span><input id="ai-max-tokens" value="${escapeAttr(aiConfig.maxTokens)}" /></label>
+            <label><span>当前模式</span><input value="Vercel 服务端代理" disabled /></label>
+            <label><span>AI 状态</span><input value="${aiConfig.enabled ? '已启用' : '已停用'}" disabled /></label>
           </div>
           <div class="toggle-row wrap-row">
             <label class="checkbox-row"><input id="ai-enabled" type="checkbox" ${aiConfig.enabled ? 'checked' : ''}/> <span>启用 AI 审讯</span></label>
@@ -476,7 +472,7 @@ function renderAISettings() {
               <button class="btn ghost small-btn" data-action="test-ai-connection">${state.aiTesting ? '测试中…' : '测试连接'}</button>
             </div>
           </div>
-          <div class="form-tip">密钥与上游地址已放在服务端代理。前端只保留模型和生成参数偏好。</div>
+          <div class="form-tip">上游 URL、API Key、默认模型都已转移到服务端环境变量，前端不再暴露这些配置。</div>
           ${state.aiTestResult ? `<div class="ai-test-result">${state.aiTestResult}</div>` : ''}
           ${state.aiError ? `<div class="ai-error">${state.aiError}</div>` : ''}
         </div>
