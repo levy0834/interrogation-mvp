@@ -1,6 +1,8 @@
 import './style.css'
 
 const STORAGE_KEY = 'interrogation-mvp-ai-config'
+const DEPLOY_MODE = 'proxy'
+const DEFAULT_MODEL = 'deepseek-chat'
 
 const caseData = {
   id: 'case_rainfall',
@@ -102,10 +104,10 @@ const caseData = {
 }
 
 const defaultAIConfig = {
-  enabled: false,
-  baseUrl: '',
+  enabled: true,
+  baseUrl: DEPLOY_MODE,
   apiKey: '',
-  model: '',
+  model: DEFAULT_MODEL,
   temperature: '0.9',
   maxTokens: '220'
 }
@@ -208,6 +210,8 @@ function toast(text) {
 }
 
 function hasUsableAIConfig() {
+  const useProxy = aiConfig.baseUrl.trim() === 'proxy'
+  if (useProxy) return aiConfig.enabled && aiConfig.model.trim()
   return aiConfig.enabled && aiConfig.baseUrl.trim() && aiConfig.apiKey.trim() && aiConfig.model.trim()
 }
 
@@ -216,16 +220,22 @@ function normalizeBaseUrl(url) {
 }
 
 async function callOpenAICompat(messages) {
-  const url = `${normalizeBaseUrl(aiConfig.baseUrl)}/chat/completions`
+  const useProxy = aiConfig.baseUrl.trim() === 'proxy'
+  const url = useProxy ? '/api/chat' : `${normalizeBaseUrl(aiConfig.baseUrl)}/chat/completions`
+  const headers = {
+    'Content-Type': 'application/json'
+  }
+
+  if (!useProxy) {
+    headers.Authorization = `Bearer ${aiConfig.apiKey.trim()}`
+  }
+
   let res
 
   try {
     res = await fetch(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${aiConfig.apiKey.trim()}`
-      },
+      headers,
       body: JSON.stringify({
         model: aiConfig.model.trim(),
         messages,
@@ -444,15 +454,16 @@ function renderAISettings() {
       <div class="ai-head">
         <div>
           <div class="panel-title">AI 审讯模式</div>
-          <strong>${hasUsableAIConfig() ? '已配置，可直连 OpenAI 兼容接口' : '未配置，当前使用规则模式'}</strong>
+          <strong>${hasUsableAIConfig() ? '已接入服务端代理，用户无需填写密钥' : '当前回退为规则模式'}</strong>
         </div>
-        <button class="btn ghost small-btn" data-action="toggle-ai-panel">${state.aiOpen ? '收起' : '展开设置'}</button>
+        <button class="btn ghost small-btn" data-action="toggle-ai-panel">${state.aiOpen ? '收起' : '查看状态'}</button>
       </div>
       ${state.aiOpen ? `
         <div class="ai-form">
-          <label><span>Base URL</span><input id="ai-base-url" placeholder="https://api.openai.com/v1" value="${escapeAttr(aiConfig.baseUrl)}" /></label>
-          <label><span>API Key</span><input id="ai-api-key" type="password" placeholder="sk-..." value="${escapeAttr(aiConfig.apiKey)}" /></label>
-          <label><span>Model</span><input id="ai-model" placeholder="gpt-4o-mini" value="${escapeAttr(aiConfig.model)}" /></label>
+          <div class="mini-grid">
+            <label><span>当前模式</span><input value="Vercel 代理" disabled /></label>
+            <label><span>默认模型</span><input id="ai-model" value="${escapeAttr(aiConfig.model)}" /></label>
+          </div>
           <div class="mini-grid">
             <label><span>Temperature</span><input id="ai-temperature" value="${escapeAttr(aiConfig.temperature)}" /></label>
             <label><span>Max tokens</span><input id="ai-max-tokens" value="${escapeAttr(aiConfig.maxTokens)}" /></label>
@@ -460,11 +471,11 @@ function renderAISettings() {
           <div class="toggle-row wrap-row">
             <label class="checkbox-row"><input id="ai-enabled" type="checkbox" ${aiConfig.enabled ? 'checked' : ''}/> <span>启用 AI 审讯</span></label>
             <div class="btn-row">
-              <button class="btn secondary small-btn" data-action="save-ai-config">保存到本机</button>
+              <button class="btn secondary small-btn" data-action="save-ai-config">保存偏好</button>
               <button class="btn ghost small-btn" data-action="test-ai-connection">${state.aiTesting ? '测试中…' : '测试连接'}</button>
             </div>
           </div>
-          <div class="form-tip">配置只保存在当前浏览器 localStorage。适合自己试玩，不适合公开分发密钥。</div>
+          <div class="form-tip">密钥与上游地址已放在服务端代理。前端只保留模型和生成参数偏好。</div>
           ${state.aiTestResult ? `<div class="ai-test-result">${state.aiTestResult}</div>` : ''}
           ${state.aiError ? `<div class="ai-error">${state.aiError}</div>` : ''}
         </div>
@@ -708,16 +719,14 @@ function escapeAttr(value) {
 }
 
 function readAIForm() {
-  const baseUrl = document.querySelector('#ai-base-url')?.value?.trim()
-  const apiKey = document.querySelector('#ai-api-key')?.value?.trim()
   const model = document.querySelector('#ai-model')?.value?.trim()
   const temperature = document.querySelector('#ai-temperature')?.value?.trim()
   const maxTokens = document.querySelector('#ai-max-tokens')?.value?.trim()
-  aiConfig.baseUrl = baseUrl ?? aiConfig.baseUrl
-  aiConfig.apiKey = apiKey ?? aiConfig.apiKey
-  aiConfig.model = model ?? aiConfig.model
-  aiConfig.temperature = temperature ?? aiConfig.temperature
-  aiConfig.maxTokens = maxTokens ?? aiConfig.maxTokens
+  aiConfig.baseUrl = DEPLOY_MODE
+  aiConfig.apiKey = ''
+  aiConfig.model = model || aiConfig.model
+  aiConfig.temperature = temperature || aiConfig.temperature
+  aiConfig.maxTokens = maxTokens || aiConfig.maxTokens
   aiConfig.enabled = !!document.querySelector('#ai-enabled')?.checked
 }
 
@@ -727,8 +736,11 @@ async function testAIConnection() {
   state.aiError = ''
   state.aiTestResult = ''
 
-  if (!aiConfig.baseUrl || !aiConfig.apiKey || !aiConfig.model) {
-    state.aiError = '先把 Base URL、API Key、Model 填完整，再测试连接。'
+  const useProxy = aiConfig.baseUrl.trim() === 'proxy'
+  if ((!useProxy && (!aiConfig.baseUrl || !aiConfig.apiKey || !aiConfig.model)) || (useProxy && !aiConfig.model)) {
+    state.aiError = useProxy
+      ? '代理模式下至少要填 Model。'
+      : '当前部署应走代理模式；如果看到这条，说明本地旧配置脏了。'
     render()
     return
   }
