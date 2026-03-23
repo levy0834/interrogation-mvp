@@ -279,6 +279,8 @@ async function callOpenAICompat(messages) {
     headers.Authorization = `Bearer ${aiConfig.apiKey.trim()}`
   }
 
+  const controller = new AbortController()
+  const timer = window.setTimeout(() => controller.abort(), 20000)
   let res
 
   try {
@@ -290,20 +292,24 @@ async function callOpenAICompat(messages) {
         messages,
         temperature: Number(aiConfig.temperature || 0.9),
         max_tokens: Number(aiConfig.maxTokens || 220)
-      })
+      }),
+      signal: controller.signal
     })
   } catch (error) {
-    throw new Error(`网络请求失败：${error.message || error}`)
+    const detail = error?.name === 'AbortError' ? '请求超时（20s）' : (error.message || error)
+    throw new Error(`网络请求失败：${detail}｜模式：${useProxy ? 'proxy' : 'direct'}｜URL：${url}`)
+  } finally {
+    window.clearTimeout(timer)
   }
 
   if (!res.ok) {
     const text = await res.text().catch(() => '')
-    throw new Error(`HTTP ${res.status}：${text || '代理或上游接口返回异常'}`)
+    throw new Error(`HTTP ${res.status}：${text || '代理或上游接口返回异常'}｜模式：${useProxy ? 'proxy' : 'direct'}｜URL：${url}`)
   }
 
   const data = await res.json().catch(() => null)
   const content = data?.choices?.[0]?.message?.content?.trim()
-  if (!content) throw new Error('接口返回成功，但没有拿到 choices[0].message.content')
+  if (!content) throw new Error(`接口返回成功，但没有拿到 choices[0].message.content｜模式：${useProxy ? 'proxy' : 'direct'}｜URL：${url}`)
   return content
 }
 
