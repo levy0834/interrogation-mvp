@@ -183,10 +183,16 @@ label span {
 
 .toggle-row,
 .free-ask-row,
-.checkbox-row {
+.checkbox-row,
+.btn-row {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.wrap-row {
+  justify-content: space-between;
+  flex-wrap: wrap;
 }
 
 .checkbox-row input {
@@ -194,13 +200,18 @@ label span {
 }
 
 .form-tip,
-.ai-error {
+.ai-error,
+.ai-test-result {
   color: var(--muted);
   font-size: 13px;
 }
 
 .ai-error {
   color: #ffd2d8;
+}
+
+.ai-test-result {
+  color: #baf5d1;
 }
 
 .small-btn {

@@ -132,7 +132,9 @@ const state = {
   toast: '',
   aiOpen: false,
   aiBusy: false,
-  aiError: ''
+  aiTesting: false,
+  aiError: '',
+  aiTestResult: ''
 }
 
 const topics = [
@@ -214,27 +216,36 @@ function normalizeBaseUrl(url) {
 }
 
 async function callOpenAICompat(messages) {
-  const res = await fetch(`${normalizeBaseUrl(aiConfig.baseUrl)}/chat/completions`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${aiConfig.apiKey.trim()}`
-    },
-    body: JSON.stringify({
-      model: aiConfig.model.trim(),
-      messages,
-      temperature: Number(aiConfig.temperature || 0.9),
-      max_tokens: Number(aiConfig.maxTokens || 220)
+  const url = `${normalizeBaseUrl(aiConfig.baseUrl)}/chat/completions`
+  let res
+
+  try {
+    res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${aiConfig.apiKey.trim()}`
+      },
+      body: JSON.stringify({
+        model: aiConfig.model.trim(),
+        messages,
+        temperature: Number(aiConfig.temperature || 0.9),
+        max_tokens: Number(aiConfig.maxTokens || 220)
+      })
     })
-  })
+  } catch (error) {
+    throw new Error(`网络请求失败：${error.message || error}`)
+  }
 
   if (!res.ok) {
     const text = await res.text().catch(() => '')
-    throw new Error(text || `AI 请求失败：${res.status}`)
+    throw new Error(`HTTP ${res.status}：${text || '上游接口返回异常'}`)
   }
 
-  const data = await res.json()
-  return data?.choices?.[0]?.message?.content?.trim() || '……'
+  const data = await res.json().catch(() => null)
+  const content = data?.choices?.[0]?.message?.content?.trim()
+  if (!content) throw new Error('接口返回成功，但没有拿到 choices[0].message.content')
+  return content
 }
 
 function buildSuspectSystemPrompt(suspect, s, context) {
@@ -446,11 +457,15 @@ function renderAISettings() {
             <label><span>Temperature</span><input id="ai-temperature" value="${escapeAttr(aiConfig.temperature)}" /></label>
             <label><span>Max tokens</span><input id="ai-max-tokens" value="${escapeAttr(aiConfig.maxTokens)}" /></label>
           </div>
-          <div class="toggle-row">
+          <div class="toggle-row wrap-row">
             <label class="checkbox-row"><input id="ai-enabled" type="checkbox" ${aiConfig.enabled ? 'checked' : ''}/> <span>启用 AI 审讯</span></label>
-            <button class="btn secondary small-btn" data-action="save-ai-config">保存到本机</button>
+            <div class="btn-row">
+              <button class="btn secondary small-btn" data-action="save-ai-config">保存到本机</button>
+              <button class="btn ghost small-btn" data-action="test-ai-connection">${state.aiTesting ? '测试中…' : '测试连接'}</button>
+            </div>
           </div>
           <div class="form-tip">配置只保存在当前浏览器 localStorage。适合自己试玩，不适合公开分发密钥。</div>
+          ${state.aiTestResult ? `<div class="ai-test-result">${state.aiTestResult}</div>` : ''}
           ${state.aiError ? `<div class="ai-error">${state.aiError}</div>` : ''}
         </div>
       ` : ''}
@@ -693,12 +708,47 @@ function escapeAttr(value) {
 }
 
 function readAIForm() {
-  aiConfig.baseUrl = document.querySelector('#ai-base-url')?.value?.trim() || aiConfig.baseUrl
-  aiConfig.apiKey = document.querySelector('#ai-api-key')?.value?.trim() || aiConfig.apiKey
-  aiConfig.model = document.querySelector('#ai-model')?.value?.trim() || aiConfig.model
-  aiConfig.temperature = document.querySelector('#ai-temperature')?.value?.trim() || aiConfig.temperature
-  aiConfig.maxTokens = document.querySelector('#ai-max-tokens')?.value?.trim() || aiConfig.maxTokens
+  const baseUrl = document.querySelector('#ai-base-url')?.value?.trim()
+  const apiKey = document.querySelector('#ai-api-key')?.value?.trim()
+  const model = document.querySelector('#ai-model')?.value?.trim()
+  const temperature = document.querySelector('#ai-temperature')?.value?.trim()
+  const maxTokens = document.querySelector('#ai-max-tokens')?.value?.trim()
+  aiConfig.baseUrl = baseUrl ?? aiConfig.baseUrl
+  aiConfig.apiKey = apiKey ?? aiConfig.apiKey
+  aiConfig.model = model ?? aiConfig.model
+  aiConfig.temperature = temperature ?? aiConfig.temperature
+  aiConfig.maxTokens = maxTokens ?? aiConfig.maxTokens
   aiConfig.enabled = !!document.querySelector('#ai-enabled')?.checked
+}
+
+async function testAIConnection() {
+  readAIForm()
+  saveAIConfig()
+  state.aiError = ''
+  state.aiTestResult = ''
+
+  if (!aiConfig.baseUrl || !aiConfig.apiKey || !aiConfig.model) {
+    state.aiError = '先把 Base URL、API Key、Model 填完整，再测试连接。'
+    render()
+    return
+  }
+
+  state.aiTesting = true
+  render()
+
+  try {
+    const content = await callOpenAICompat([
+      { role: 'system', content: '你是一个连通性测试器。只回复 OK。' },
+      { role: 'user', content: '请只回复 OK' }
+    ])
+    state.aiTestResult = `连接成功：${content}`
+    toast('AI 接口已连通')
+  } catch (error) {
+    state.aiError = String(error.message || error)
+  } finally {
+    state.aiTesting = false
+    render()
+  }
 }
 
 function bindEvents() {
@@ -709,8 +759,11 @@ function bindEvents() {
       if (action === 'save-ai-config') {
         readAIForm()
         saveAIConfig()
+        state.aiError = ''
+        state.aiTestResult = ''
         toast('AI 配置已保存在本机浏览器')
       }
+      if (action === 'test-ai-connection') await testAIConnection()
       if (action === 'pick-suspect') state.currentSuspectId = id
       if (action === 'start') state.screen = 'investigation'
       if (action === 'go-clues' || action === 'go-board') state.screen = 'board'
