@@ -298,7 +298,7 @@ async function callOpenAICompat(messages) {
 
   if (!res.ok) {
     const text = await res.text().catch(() => '')
-    throw new Error(`HTTP ${res.status}：${text || '上游接口返回异常'}`)
+    throw new Error(`HTTP ${res.status}：${text || '代理或上游接口返回异常'}`)
   }
 
   const data = await res.json().catch(() => null)
@@ -368,7 +368,7 @@ async function freeAskAI() {
     document.querySelector('#free-ask-input').value = ''
     if (suspect.id === 'chen' && /书房|录音|电脑|时间|阳台/.test(input)) addClue('evi_doorlog')
   } catch (error) {
-    state.aiError = String(error.message || error)
+    state.aiError = `${String(error.message || error)}。如果是手机环境，优先看 Vercel 日志里的真实响应。`
     toast('AI 调用失败，已保留规则模式可玩')
   } finally {
     state.aiBusy = false
@@ -406,7 +406,7 @@ async function askTopic(topicId) {
       render()
       reply = await askAI(topicId, topics.find((item) => item.id === topicId)?.label || topicId)
     } catch (error) {
-      state.aiError = String(error.message || error)
+      state.aiError = `${String(error.message || error)}。如果是手机环境，优先看 Vercel 日志里的真实响应。`
       reply = base
       toast('AI 问话失败，已回退到规则回答')
     } finally {
@@ -1035,7 +1035,7 @@ async function testAIConnection() {
     state.aiTestResult = `连接成功：${content}`
     toast('AI 接口已连通')
   } catch (error) {
-    state.aiError = String(error.message || error)
+    state.aiError = `${String(error.message || error)}。如果是手机环境，优先看 Vercel 日志里的真实响应。`
   } finally {
     state.aiTesting = false
     render()
