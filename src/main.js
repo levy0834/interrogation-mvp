@@ -673,7 +673,7 @@ function renderInvestigation() {
         <div class="log-stream">
           ${state.statementLog.length ? state.statementLog.map((entry) => `
             <article class="log-card ${entry.kind}">
-              <div class="log-meta">${suspectById(entry.suspectId).name} · ${entry.kind === 'ask' ? '问话' : entry.kind === 'evidence' ? '证据施压' : entry.kind === 'ai' ? '自由追问' : '连续施压'} · ${entry.mode === 'ai' ? 'AI' : '规则'}</div>
+              <div class="log-meta">${suspectById(entry.suspectId).name} · ${entry.kind === 'ask' ? '问话' : entry.kind === 'evidence' ? '证据施压' : entry.kind === 'ai' ? '自由追问' : '连续施压'} · ${entry.mode === 'ai' ? 'AI 回答' : '规则反馈'}</div>
               <p>${entry.text.replace(/\n/g, '<br/>')}</p>
             </article>
           `).join('') : '<div class="empty-state">先从一个问题开始，把口供拉出来。</div>'}
@@ -802,12 +802,23 @@ function renderCloseCase() {
   `
 }
 
+function getOutcomeTone() {
+  if (!state.outcome) return 'neutral'
+  if (state.outcome.verdict === '完美结案') return 'perfect'
+  if (state.outcome.verdict === '成功结案') return 'good'
+  return 'bad'
+}
+
 function renderEnding() {
   return `
-    <section class="ending-shell">
+    <section class="ending-shell ${getOutcomeTone()}">
       <div class="case-badge">结案回放</div>
       <h1>${state.outcome.title}</h1>
       <div class="verdict">${state.outcome.verdict}</div>
+      <div class="ending-tags">
+        <span>${state.accusation.culprit ? `你指控了 ${suspectById(state.accusation.culprit)?.name}` : '未锁定嫌疑人'}</span>
+        <span>${state.accusation.evidenceIds.length} 条核心证据</span>
+      </div>
       <p class="lead">${state.outcome.body}</p>
       <div class="panel large recap-panel">
         <div class="panel-title">审讯回放</div>
