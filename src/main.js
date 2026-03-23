@@ -269,7 +269,7 @@ function toast(text) {
 
 function hasUsableAIConfig() {
   const useProxy = aiConfig.baseUrl.trim() === 'proxy'
-  if (useProxy) return aiConfig.enabled && aiConfig.model.trim()
+  if (useProxy) return aiConfig.enabled
   return aiConfig.enabled && aiConfig.baseUrl.trim() && aiConfig.apiKey.trim() && aiConfig.model.trim()
 }
 
