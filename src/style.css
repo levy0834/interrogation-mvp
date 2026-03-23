@@ -714,3 +714,14 @@ label span {
   border-color: rgba(255, 100, 124, 0.22);
   color: #ffd6de;
 }
+
+.chain-panel ol {
+  margin: 10px 0 0;
+  padding-left: 18px;
+  color: var(--soft);
+}
+
+.ending-shell.bad .verdict,
+.ending-shell.neutral .verdict {
+  background: rgba(255, 100, 124, 0.12);
+}

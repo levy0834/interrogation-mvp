@@ -372,6 +372,22 @@ async function freeAskAI() {
   }
 }
 
+function applyMisplayPenalty(s, suspectId) {
+  s.guard = Math.min(100, s.guard + 6)
+  s.attitude = Math.max(0, s.attitude - 5)
+  if (suspectId === 'chen') s.stress = Math.max(0, s.stress - 2)
+  updatePhase(s)
+}
+
+function addBreakthrough(suspectId, key) {
+  const s = suspectState[suspectId]
+  if (!s.breakthroughs.includes(key)) s.breakthroughs.push(key)
+}
+
+function hasBreakthrough(suspectId, key) {
+  return suspectState[suspectId].breakthroughs.includes(key)
+}
+
 async function askTopic(topicId) {
   const suspect = suspectById(state.currentSuspectId)
   const s = suspectState[suspect.id]
@@ -396,8 +412,11 @@ async function askTopic(topicId) {
     if (s.phase === '动摇' && pressured) reply = pressured
     if (s.phase === '崩溃' && suspect.id === 'chen' && topicId === 'timeline') {
       reply = '你们以为抓住时间就够了？她当时还活着，只是……她不该拿那些东西威胁我。'
-      if (!s.breakthroughs.includes('timeline')) s.breakthroughs.push('timeline')
+      addBreakthrough(suspect.id, 'timeline')
     }
+    if (suspect.id === 'lin' && topicId === 'relationship' && s.phase !== '冷静') reply = '你们总喜欢把旧情说成动机。她是刺人，但不是谁都舍得真把她推下去。'
+    if (suspect.id === 'xu' && topicId === 'motive' && s.phase !== '冷静') reply = '我怕的是平台一起沉，不是她一个人的情绪。你如果听不懂区别，我也没办法。'
+    if (suspect.id === 'chen' && topicId === 'relationship' && s.phase === '防御') reply = '我和她之间不是私人恩怨，而是成年人之间对代价的理解差异。'
   }
 
   s.asked.push(topicId)
@@ -444,9 +463,7 @@ function presentEvidence(evidenceId) {
   const clue = clueById(evidenceId)
 
   if (!reaction) {
-    s.guard = Math.min(100, s.guard + 4)
-    s.attitude = Math.max(0, s.attitude - 4)
-    updatePhase(s)
+    applyMisplayPenalty(s, suspect.id)
     addLog(suspect.id, 'evidence', `你出示了【${clue.title}】。${suspect.name}看了一眼，冷冷地说：“这和我有什么关系？”`)
     toast('这份证据和当前话题关联不强')
     render()
@@ -456,9 +473,9 @@ function presentEvidence(evidenceId) {
   s.stress = Math.min(100, s.stress + reaction.stress)
   s.guard = Math.max(0, s.guard + reaction.guard)
   if (!state.evidenceUsed.includes(evidenceId)) state.evidenceUsed.push(evidenceId)
-  if (evidenceId === 'evi_backup') addClue('evi_backup')
-  if (evidenceId === 'evi_shoeprint') addClue('evi_shoeprint')
-  if (evidenceId === 'evi_doorlog') addClue('evi_doorlog')
+  if (evidenceId === 'evi_backup') { addClue('evi_backup'); addBreakthrough(suspect.id, 'backup') }
+  if (evidenceId === 'evi_shoeprint') { addClue('evi_shoeprint'); addBreakthrough(suspect.id, 'balcony') }
+  if (evidenceId === 'evi_doorlog') { addClue('evi_doorlog'); addBreakthrough(suspect.id, 'doorlog') }
 
   updatePhase(s)
   addLog(suspect.id, 'evidence', `你出示了【${clue.title}】。\n${reaction.text}`)
@@ -494,9 +511,13 @@ function submitAccusation() {
     verdict = '成功结案'
     title = '你抓到了人，但真相还差半步'
     body = '你锁定了陈默，也抓住了核心证据，但作案逻辑没有完全讲清。案件依然成立，只是少了那记最重的落锤。'
+  } else if (correctCulprit) {
+    verdict = '锁定错误不远'
+    title = '你盯对了人，但证据太松'
+    body = '你隐约摸到了真正的方向，但没有把证据链压成闭环，陈默仍有翻口的空间。'
   }
 
-  if (verdict === '失败') body = `${body} ${failureReview()}`
+  if (verdict === '失败' || verdict === '锁定错误不远') body = `${body} ${failureReview()}`
   state.outcome = { verdict, title, body }
   state.screen = 'ending'
   render()
@@ -755,7 +776,7 @@ function renderInvestigation() {
             </div>
           </div>
           <div class="action-group">
-            <div class="panel-title small">施压</div>
+            <div class="panel-title small">施压</div><div class="inline-tip">压得太急会让对方重新筑起防线，错证据也会反噬。</div>
             <button class="btn secondary" data-action="pressure">连续追问，逼他露口风</button>
           </div>
           <div class="action-group">
@@ -885,6 +906,14 @@ function renderEnding() {
       <div class="panel large recap-panel">
         <div class="panel-title">审讯回放</div>
         <p>你真正完成的不是一次选择题，而是把三条分散的线索压成了一条证据链：时间线说谎、现场痕迹、认知失言。</p>
+      </div>
+      <div class="panel large chain-panel">
+        <div class="panel-title">关键证据链</div>
+        <ol>
+          <li>门禁记录推翻了陈默自述的离开时间。</li>
+          <li>阳台鞋印和擦痕说明现场更像推搡后的伪装。</li>
+          <li>录音云端备份暴露出陈默知道不该知道的事。</li>
+        </ol>
       </div>
       <div class="panel large">
         <div class="panel-title">标准答案</div>
