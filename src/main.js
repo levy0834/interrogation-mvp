@@ -1,5 +1,7 @@
 import './style.css'
 
+const STORAGE_KEY = 'interrogation-mvp-ai-config'
+
 const caseData = {
   id: 'case_rainfall',
   title: '雨夜坠楼案',
@@ -32,7 +34,7 @@ const caseData = {
         evi_doorlog: '门禁你都看到了，我 20:57 就走了。后面的事跟我没关系。'
       },
       tells: ['承认争吵升级', '刻意强调自己离开得早'],
-      unlocks: ['evi_lens', 'stmt_lin_left_early']
+      unlocks: ['evi_lens']
     },
     {
       id: 'xu',
@@ -55,7 +57,7 @@ const caseData = {
         evi_mail: '她那封稿子如果真发出去，谁都拦不住。你该盯的是更怕曝光的人。'
       },
       tells: ['隐瞒停留时间', '知道稿件会惹上更大人物'],
-      unlocks: ['evi_coffee', 'stmt_xu_waited_downstairs']
+      unlocks: ['evi_coffee']
     },
     {
       id: 'chen',
@@ -79,82 +81,18 @@ const caseData = {
         evi_backup: '她电脑里根本没有你们想找的录音。——等等，我的意思是，我猜她不会那么蠢。'
       },
       tells: ['过度强调“体面收场”', '知道录音不在电脑里', '试图贬低调查员'],
-      unlocks: ['stmt_chen_left_before_22', 'stmt_chen_knows_backup']
+      unlocks: ['evi_doorlog']
     }
   ],
   clues: [
-    {
-      id: 'evi_lens',
-      title: '碎裂的相机镜头',
-      type: '物证',
-      summary: '客厅地面发现破碎镜头，印证林骁确实与死者激烈争执。',
-      details: '镜头碎裂位置在客厅，不在阳台。说明争吵发生过，但不构成坠楼直接证据。',
-      source: '林骁口供 / 现场照片',
-      tags: ['lin', '客厅', '争吵']
-    },
-    {
-      id: 'evi_coffee',
-      title: '楼下咖啡小票',
-      type: '票据',
-      summary: '时间 21:08，证明许薇在公寓附近停留时间不短。',
-      details: '许薇声称只是短暂停留，但小票与消息时间结合，说明她在楼下徘徊过。',
-      source: '许薇随身物',
-      tags: ['xu', '时间线']
-    },
-    {
-      id: 'evi_mail',
-      title: '未发送成功的调查稿邮件',
-      type: '电子证据',
-      summary: '周岚死亡前仍在尝试发送曝光材料。',
-      details: '邮件发送失败时间靠近死亡时间，说明她当时正在紧急处理资料，不符合自杀前平静状态。',
-      source: '死者电脑',
-      tags: ['死者', '稿件', '动机']
-    },
-    {
-      id: 'evi_doorlog',
-      title: '门禁记录',
-      type: '系统记录',
-      summary: '陈默 21:42 上楼，22:18 才离开，直接冲击其时间口供。',
-      details: '林骁 20:57 离开；许薇无上楼记录；陈默停留时间明显超出其自述。',
-      source: '公寓系统',
-      tags: ['chen', '时间线', '关键']
-    },
-    {
-      id: 'evi_neighbor',
-      title: '邻居证词',
-      type: '口供',
-      summary: '22 点后仍听到低沉男声争执。',
-      details: '邻居描述声音克制而低沉，更接近陈默而非情绪型的林骁。',
-      source: '邻居口供',
-      tags: ['chen', '争执']
-    },
-    {
-      id: 'evi_shoeprint',
-      title: '阳台鞋印比对',
-      type: '法证',
-      summary: '阳台边缘折返鞋纹与陈默皮鞋吻合。',
-      details: '鞋纹排除林骁常穿的运动鞋，说明有人在湿滑阳台边缘停留并折返。',
-      source: '现场勘查',
-      tags: ['chen', '阳台', '关键']
-    },
-    {
-      id: 'evi_backup',
-      title: '录音云端备份提示',
-      type: '手机截图',
-      summary: '录音并不只在电脑里，说明有人试图找过本地文件。',
-      details: '死者手机自动备份提示显示：录音早已同步云端。若有人强调“电脑里没有录音”，就说明他接触过书房设备。',
-      source: '死者手机',
-      tags: ['chen', '书房', '关键']
-    },
-    {
-      id: 'evi_balcony',
-      title: '雨夜阳台照片',
-      type: '现场照片',
-      summary: '栏杆外侧有擦痕，地面积水被拖动过。',
-      details: '更像二次施力后的现场，不像单纯失足。',
-      source: '现场照片',
-      tags: ['阳台', '手法']
-    }
+    { id: 'evi_lens', title: '碎裂的相机镜头', type: '物证', summary: '客厅地面发现破碎镜头，印证林骁确实与死者激烈争执。', details: '镜头碎裂位置在客厅，不在阳台。说明争吵发生过，但不构成坠楼直接证据。', source: '林骁口供 / 现场照片' },
+    { id: 'evi_coffee', title: '楼下咖啡小票', type: '票据', summary: '时间 21:08，证明许薇在公寓附近停留时间不短。', details: '许薇声称只是短暂停留，但小票与消息时间结合，说明她在楼下徘徊过。', source: '许薇随身物' },
+    { id: 'evi_mail', title: '未发送成功的调查稿邮件', type: '电子证据', summary: '周岚死亡前仍在尝试发送曝光材料。', details: '邮件发送失败时间靠近死亡时间，说明她当时正在紧急处理资料，不符合自杀前平静状态。', source: '死者电脑' },
+    { id: 'evi_doorlog', title: '门禁记录', type: '系统记录', summary: '陈默 21:42 上楼，22:18 才离开，直接冲击其时间口供。', details: '林骁 20:57 离开；许薇无上楼记录；陈默停留时间明显超出其自述。', source: '公寓系统' },
+    { id: 'evi_neighbor', title: '邻居证词', type: '口供', summary: '22 点后仍听到低沉男声争执。', details: '邻居描述声音克制而低沉，更接近陈默而非情绪型的林骁。', source: '邻居口供' },
+    { id: 'evi_shoeprint', title: '阳台鞋印比对', type: '法证', summary: '阳台边缘折返鞋纹与陈默皮鞋吻合。', details: '鞋纹排除林骁常穿的运动鞋，说明有人在湿滑阳台边缘停留并折返。', source: '现场勘查' },
+    { id: 'evi_backup', title: '录音云端备份提示', type: '手机截图', summary: '录音并不只在电脑里，说明有人试图找过本地文件。', details: '死者手机自动备份提示显示：录音早已同步云端。若有人强调“电脑里没有录音”，就说明他接触过书房设备。', source: '死者手机' },
+    { id: 'evi_balcony', title: '雨夜阳台照片', type: '现场照片', summary: '栏杆外侧有擦痕，地面积水被拖动过。', details: '更像二次施力后的现场，不像单纯失足。', source: '现场照片' }
   ],
   ending: {
     culprit: 'chen',
@@ -163,17 +101,25 @@ const caseData = {
   }
 }
 
-const suspectState = Object.fromEntries(caseData.suspects.map((suspect) => [
-  suspect.id,
-  {
-    attitude: suspect.initial.attitude,
-    stress: suspect.initial.stress,
-    guard: suspect.initial.guard,
-    phase: '冷静',
-    asked: [],
-    breakthroughs: []
-  }
-]))
+const defaultAIConfig = {
+  enabled: false,
+  baseUrl: '',
+  apiKey: '',
+  model: '',
+  temperature: '0.9',
+  maxTokens: '220'
+}
+
+const aiConfig = loadAIConfig()
+
+const suspectState = Object.fromEntries(caseData.suspects.map((suspect) => [suspect.id, {
+  attitude: suspect.initial.attitude,
+  stress: suspect.initial.stress,
+  guard: suspect.initial.guard,
+  phase: '冷静',
+  asked: [],
+  breakthroughs: []
+}]))
 
 const state = {
   screen: 'home',
@@ -181,18 +127,12 @@ const state = {
   discoveredClues: ['evi_lens', 'evi_mail', 'evi_neighbor', 'evi_balcony'],
   evidenceUsed: [],
   statementLog: [],
-  unlockedTopics: {
-    lin: ['relationship', 'timeline', 'motive'],
-    xu: ['relationship', 'timeline', 'motive'],
-    chen: ['relationship', 'timeline', 'motive']
-  },
-  accusation: {
-    culprit: '',
-    method: '',
-    evidenceIds: []
-  },
+  accusation: { culprit: '', method: '', evidenceIds: [] },
   outcome: null,
-  toast: ''
+  toast: '',
+  aiOpen: false,
+  aiBusy: false,
+  aiError: ''
 }
 
 const topics = [
@@ -203,21 +143,34 @@ const topics = [
 
 const evidenceReactions = {
   lin: {
-    evi_lens: { text: caseData.suspects[0].contradictions.evi_lens, stress: 18, guard: -10, unlock: [] },
-    evi_doorlog: { text: caseData.suspects[0].contradictions.evi_doorlog, stress: 10, guard: -8, unlock: [] }
+    evi_lens: { text: caseData.suspects[0].contradictions.evi_lens, stress: 18, guard: -10 },
+    evi_doorlog: { text: caseData.suspects[0].contradictions.evi_doorlog, stress: 10, guard: -8 }
   },
   xu: {
-    evi_coffee: { text: caseData.suspects[1].contradictions.evi_coffee, stress: 12, guard: -6, unlock: [] },
-    evi_mail: { text: caseData.suspects[1].contradictions.evi_mail, stress: 8, guard: -8, unlock: [] }
+    evi_coffee: { text: caseData.suspects[1].contradictions.evi_coffee, stress: 12, guard: -6 },
+    evi_mail: { text: caseData.suspects[1].contradictions.evi_mail, stress: 8, guard: -8 }
   },
   chen: {
-    evi_doorlog: { text: caseData.suspects[2].contradictions.evi_doorlog, stress: 24, guard: -12, unlock: ['evi_doorlog'] },
-    evi_shoeprint: { text: caseData.suspects[2].contradictions.evi_shoeprint, stress: 26, guard: -12, unlock: ['evi_shoeprint'] },
-    evi_backup: { text: caseData.suspects[2].contradictions.evi_backup, stress: 32, guard: -18, unlock: ['evi_backup'] }
+    evi_doorlog: { text: caseData.suspects[2].contradictions.evi_doorlog, stress: 24, guard: -12 },
+    evi_shoeprint: { text: caseData.suspects[2].contradictions.evi_shoeprint, stress: 26, guard: -12 },
+    evi_backup: { text: caseData.suspects[2].contradictions.evi_backup, stress: 32, guard: -18 }
   }
 }
 
 const app = document.querySelector('#app')
+
+function loadAIConfig() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    return raw ? { ...defaultAIConfig, ...JSON.parse(raw) } : { ...defaultAIConfig }
+  } catch {
+    return { ...defaultAIConfig }
+  }
+}
+
+function saveAIConfig() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(aiConfig))
+}
 
 function suspectById(id) {
   return caseData.suspects.find((item) => item.id === id)
@@ -231,8 +184,8 @@ function addClue(id) {
   if (!state.discoveredClues.includes(id)) state.discoveredClues.push(id)
 }
 
-function addLog(suspectId, kind, text) {
-  state.statementLog.unshift({ suspectId, kind, text, time: Date.now() })
+function addLog(suspectId, kind, text, mode = 'rules') {
+  state.statementLog.unshift({ suspectId, kind, text, mode, time: Date.now() })
 }
 
 function updatePhase(s) {
@@ -252,31 +205,144 @@ function toast(text) {
   }, 1800)
 }
 
-function askTopic(topicId) {
+function hasUsableAIConfig() {
+  return aiConfig.enabled && aiConfig.baseUrl.trim() && aiConfig.apiKey.trim() && aiConfig.model.trim()
+}
+
+function normalizeBaseUrl(url) {
+  return url.replace(/\/$/, '')
+}
+
+async function callOpenAICompat(messages) {
+  const res = await fetch(`${normalizeBaseUrl(aiConfig.baseUrl)}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${aiConfig.apiKey.trim()}`
+    },
+    body: JSON.stringify({
+      model: aiConfig.model.trim(),
+      messages,
+      temperature: Number(aiConfig.temperature || 0.9),
+      max_tokens: Number(aiConfig.maxTokens || 220)
+    })
+  })
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => '')
+    throw new Error(text || `AI 请求失败：${res.status}`)
+  }
+
+  const data = await res.json()
+  return data?.choices?.[0]?.message?.content?.trim() || '……'
+}
+
+function buildSuspectSystemPrompt(suspect, s, context) {
+  return `你在扮演悬疑审讯游戏中的嫌疑人【${suspect.name}】。
+
+你的身份：${suspect.role}
+人物气质：${suspect.vibe}
+当前状态：压力 ${s.stress}/100，防御 ${s.guard}/100，配合 ${s.attitude}/100，阶段 ${s.phase}
+
+案件背景：雨夜坠楼案。死者周岚是调查记者，正在追查医药公司违规试药。你与她在案发当晚有接触。
+
+已知角色口供基线：
+- 关系：${suspect.confession.relationship}
+- 时间线：${suspect.confession.timeline}
+- 动机：${suspect.confession.motive}
+
+你必须遵守：
+1. 绝不能直接跳出角色。
+2. 绝不能直接承认“我是凶手”或完整泄露真相。
+3. 你的回答要像被审讯时的真人说话，不要像 AI 助手。
+4. 长度控制在 1~3 句，短、硬、带情绪。
+5. 如果玩家问题命中你的弱点，你可以出现动摇、回避、改口、失言，但不能把案件全盘讲穿。
+6. 只输出嫌疑人的台词，不要输出解释、括号、标签。
+
+补充上下文：${context}`
+}
+
+async function askAI(topicId, label) {
+  const suspect = suspectById(state.currentSuspectId)
+  const s = suspectState[suspect.id]
+  const context = `玩家正在问话。问话主题是：${label}。当前已发现证据：${state.discoveredClues.map((id) => clueById(id)?.title).join('、')}。`
+  const messages = [
+    { role: 'system', content: buildSuspectSystemPrompt(suspect, s, context) },
+    { role: 'user', content: label }
+  ]
+  return callOpenAICompat(messages)
+}
+
+async function freeAskAI() {
+  const suspect = suspectById(state.currentSuspectId)
+  const s = suspectState[suspect.id]
+  const input = document.querySelector('#free-ask-input')?.value?.trim()
+  if (!input) return toast('先写一句你想追问的话')
+  if (!hasUsableAIConfig()) return toast('先在上方填好 AI 配置再启用 AI 审讯')
+
+  state.aiBusy = true
+  state.aiError = ''
+  render()
+
+  try {
+    const context = `玩家自由追问。当前证据：${state.discoveredClues.map((id) => clueById(id)?.title).join('、')}。玩家可能在试图逼问时间线、书房、录音、阳台或动机。`
+    const reply = await callOpenAICompat([
+      { role: 'system', content: buildSuspectSystemPrompt(suspect, s, context) },
+      { role: 'user', content: input }
+    ])
+
+    s.stress = Math.min(100, s.stress + 8)
+    s.guard = Math.max(0, s.guard - 4)
+    updatePhase(s)
+    addLog(suspect.id, 'ai', `玩家追问：${input}\n${reply}`, 'ai')
+    document.querySelector('#free-ask-input').value = ''
+    if (suspect.id === 'chen' && /书房|录音|电脑|时间|阳台/.test(input)) addClue('evi_doorlog')
+  } catch (error) {
+    state.aiError = String(error.message || error)
+    toast('AI 调用失败，已保留规则模式可玩')
+  } finally {
+    state.aiBusy = false
+    render()
+  }
+}
+
+async function askTopic(topicId) {
   const suspect = suspectById(state.currentSuspectId)
   const s = suspectState[suspect.id]
   const base = suspect.confession[topicId]
   const pressured = suspect.pressured[topicId]
   let reply = base
 
-  if (s.phase === '动摇' && pressured) reply = pressured
-  if (s.phase === '崩溃' && suspect.id === 'chen' && topicId === 'timeline') {
-    reply = '你们以为抓住时间就够了？她当时还活着，只是……她不该拿那些东西威胁我。'
-    if (!s.breakthroughs.includes('timeline')) s.breakthroughs.push('timeline')
+  if (hasUsableAIConfig()) {
+    try {
+      state.aiBusy = true
+      state.aiError = ''
+      render()
+      reply = await askAI(topicId, topics.find((item) => item.id === topicId)?.label || topicId)
+    } catch (error) {
+      state.aiError = String(error.message || error)
+      reply = base
+      toast('AI 问话失败，已回退到规则回答')
+    } finally {
+      state.aiBusy = false
+    }
+  } else {
+    if (s.phase === '动摇' && pressured) reply = pressured
+    if (s.phase === '崩溃' && suspect.id === 'chen' && topicId === 'timeline') {
+      reply = '你们以为抓住时间就够了？她当时还活着，只是……她不该拿那些东西威胁我。'
+      if (!s.breakthroughs.includes('timeline')) s.breakthroughs.push('timeline')
+    }
   }
 
   s.asked.push(topicId)
-  s.stress += 6
+  s.stress = Math.min(100, s.stress + 6)
   s.guard = Math.max(0, s.guard - 3)
   updatePhase(s)
 
   suspect.unlocks?.forEach(addClue)
-  addLog(suspect.id, 'ask', `${topics.find((item) => item.id === topicId)?.label}\n${reply}`)
+  addLog(suspect.id, 'ask', `${topics.find((item) => item.id === topicId)?.label}\n${reply}`, hasUsableAIConfig() ? 'ai' : 'rules')
 
-  if (suspect.id === 'chen' && s.phase === '动摇') {
-    addClue('evi_doorlog')
-  }
-
+  if (suspect.id === 'chen' && s.phase === '动摇') addClue('evi_doorlog')
   render()
 }
 
@@ -316,11 +382,9 @@ function presentEvidence(evidenceId) {
   s.stress = Math.min(100, s.stress + reaction.stress)
   s.guard = Math.max(0, s.guard + reaction.guard)
   if (!state.evidenceUsed.includes(evidenceId)) state.evidenceUsed.push(evidenceId)
-  reaction.unlock.forEach(addClue)
-
-  if (suspect.id === 'chen' && evidenceId === 'evi_backup' && !s.breakthroughs.includes('backup')) {
-    s.breakthroughs.push('backup')
-  }
+  if (evidenceId === 'evi_backup') addClue('evi_backup')
+  if (evidenceId === 'evi_shoeprint') addClue('evi_shoeprint')
+  if (evidenceId === 'evi_doorlog') addClue('evi_doorlog')
 
   updatePhase(s)
   addLog(suspect.id, 'evidence', `你出示了【${clue.title}】。\n${reaction.text}`)
@@ -363,12 +427,44 @@ function submitAccusation() {
   render()
 }
 
+function renderAISettings() {
+  return `
+    <div class="ai-panel ${state.aiOpen ? 'open' : ''}">
+      <div class="ai-head">
+        <div>
+          <div class="panel-title">AI 审讯模式</div>
+          <strong>${hasUsableAIConfig() ? '已配置，可直连 OpenAI 兼容接口' : '未配置，当前使用规则模式'}</strong>
+        </div>
+        <button class="btn ghost small-btn" data-action="toggle-ai-panel">${state.aiOpen ? '收起' : '展开设置'}</button>
+      </div>
+      ${state.aiOpen ? `
+        <div class="ai-form">
+          <label><span>Base URL</span><input id="ai-base-url" placeholder="https://api.openai.com/v1" value="${escapeAttr(aiConfig.baseUrl)}" /></label>
+          <label><span>API Key</span><input id="ai-api-key" type="password" placeholder="sk-..." value="${escapeAttr(aiConfig.apiKey)}" /></label>
+          <label><span>Model</span><input id="ai-model" placeholder="gpt-4o-mini" value="${escapeAttr(aiConfig.model)}" /></label>
+          <div class="mini-grid">
+            <label><span>Temperature</span><input id="ai-temperature" value="${escapeAttr(aiConfig.temperature)}" /></label>
+            <label><span>Max tokens</span><input id="ai-max-tokens" value="${escapeAttr(aiConfig.maxTokens)}" /></label>
+          </div>
+          <div class="toggle-row">
+            <label class="checkbox-row"><input id="ai-enabled" type="checkbox" ${aiConfig.enabled ? 'checked' : ''}/> <span>启用 AI 审讯</span></label>
+            <button class="btn secondary small-btn" data-action="save-ai-config">保存到本机</button>
+          </div>
+          <div class="form-tip">配置只保存在当前浏览器 localStorage。适合自己试玩，不适合公开分发密钥。</div>
+          ${state.aiError ? `<div class="ai-error">${state.aiError}</div>` : ''}
+        </div>
+      ` : ''}
+    </div>
+  `
+}
+
 function renderHome() {
   return `
     <section class="hero-shell">
       <div class="case-badge">${caseData.code} · 单案审讯博弈</div>
       <h1>${caseData.title}</h1>
       <p class="lead">${caseData.intro}</p>
+      ${renderAISettings()}
       <div class="hero-grid">
         <div class="panel highlight">
           <div class="panel-title">死者档案</div>
@@ -408,6 +504,7 @@ function renderTopbar() {
         <h2>${caseData.title}</h2>
       </div>
       <div class="top-actions">
+        <span class="mode-pill ${hasUsableAIConfig() ? 'ai' : 'rules'}">${hasUsableAIConfig() ? 'AI 模式' : '规则模式'}</span>
         <button class="top-link" data-action="go-board">线索板</button>
         <button class="top-link ${ready ? 'ready' : ''}" data-action="go-close">${ready ? '锁定指控' : '证据未足'}</button>
       </div>
@@ -420,6 +517,7 @@ function renderInvestigation() {
   const s = suspectState[suspect.id]
   return `
     ${renderTopbar()}
+    ${renderAISettings()}
     <section class="main-layout">
       <aside class="suspect-panel">
         <div class="portrait">${suspect.name.slice(0, 1)}</div>
@@ -444,7 +542,7 @@ function renderInvestigation() {
         <div class="log-stream">
           ${state.statementLog.length ? state.statementLog.map((entry) => `
             <article class="log-card ${entry.kind}">
-              <div class="log-meta">${suspectById(entry.suspectId).name} · ${entry.kind === 'ask' ? '问话' : entry.kind === 'evidence' ? '证据施压' : '连续施压'}</div>
+              <div class="log-meta">${suspectById(entry.suspectId).name} · ${entry.kind === 'ask' ? '问话' : entry.kind === 'evidence' ? '证据施压' : entry.kind === 'ai' ? '自由追问' : '连续施压'} · ${entry.mode === 'ai' ? 'AI' : '规则'}</div>
               <p>${entry.text.replace(/\n/g, '<br/>')}</p>
             </article>
           `).join('') : '<div class="empty-state">先从一个问题开始，把口供拉出来。</div>'}
@@ -453,7 +551,14 @@ function renderInvestigation() {
           <div class="action-group">
             <div class="panel-title small">问话</div>
             <div class="chip-row">
-              ${topics.map((topic) => `<button class="chip" data-action="ask-topic" data-id="${topic.id}">${topic.label}</button>`).join('')}
+              ${topics.map((topic) => `<button class="chip" data-action="ask-topic" data-id="${topic.id}" ${state.aiBusy ? 'disabled' : ''}>${topic.label}</button>`).join('')}
+            </div>
+          </div>
+          <div class="action-group">
+            <div class="panel-title small">自由追问（AI）</div>
+            <div class="free-ask-row">
+              <input id="free-ask-input" placeholder="比如：你为什么知道录音不在电脑里？" ${state.aiBusy ? 'disabled' : ''} />
+              <button class="btn primary small-btn" data-action="free-ask" ${state.aiBusy ? 'disabled' : ''}>${state.aiBusy ? '思考中…' : '追问'}</button>
             </div>
           </div>
           <div class="action-group">
@@ -583,16 +688,36 @@ function renderEnding() {
   `
 }
 
+function escapeAttr(value) {
+  return String(value || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')
+}
+
+function readAIForm() {
+  aiConfig.baseUrl = document.querySelector('#ai-base-url')?.value?.trim() || aiConfig.baseUrl
+  aiConfig.apiKey = document.querySelector('#ai-api-key')?.value?.trim() || aiConfig.apiKey
+  aiConfig.model = document.querySelector('#ai-model')?.value?.trim() || aiConfig.model
+  aiConfig.temperature = document.querySelector('#ai-temperature')?.value?.trim() || aiConfig.temperature
+  aiConfig.maxTokens = document.querySelector('#ai-max-tokens')?.value?.trim() || aiConfig.maxTokens
+  aiConfig.enabled = !!document.querySelector('#ai-enabled')?.checked
+}
+
 function bindEvents() {
   document.querySelectorAll('[data-action]').forEach((el) => {
-    el.addEventListener('click', () => {
+    el.addEventListener('click', async () => {
       const { action, id } = el.dataset
+      if (action === 'toggle-ai-panel') state.aiOpen = !state.aiOpen
+      if (action === 'save-ai-config') {
+        readAIForm()
+        saveAIConfig()
+        toast('AI 配置已保存在本机浏览器')
+      }
       if (action === 'pick-suspect') state.currentSuspectId = id
       if (action === 'start') state.screen = 'investigation'
       if (action === 'go-clues' || action === 'go-board') state.screen = 'board'
       if (action === 'go-investigation') state.screen = 'investigation'
       if (action === 'go-close' && isReadyToClose()) state.screen = 'close'
-      if (action === 'ask-topic') askTopic(id)
+      if (action === 'ask-topic') await askTopic(id)
+      if (action === 'free-ask') await freeAskAI()
       if (action === 'pressure') pressureSuspect()
       if (action === 'present-evidence') presentEvidence(id)
       if (action === 'choose-culprit') state.accusation.culprit = id
