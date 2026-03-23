@@ -3,7 +3,7 @@ import './style.css'
 const STORAGE_KEY = 'interrogation-mvp-ai-config'
 const DEPLOY_MODE = 'proxy'
 const DEFAULT_MODEL = 'deepseek-chat'
-const PROXY_API_BASE = 'https://interrogation-33gtwuano-levy0834s-projects-c6ee7307.vercel.app'
+const PROXY_API_BASE = ''
 
 const caseData = {
   id: 'case_rainfall',
