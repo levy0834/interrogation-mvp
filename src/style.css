@@ -725,3 +725,16 @@ label span {
 .ending-shell.neutral .verdict {
   background: rgba(255, 100, 124, 0.12);
 }
+
+.danger-chip {
+  background: rgba(255, 100, 124, 0.08);
+  border-color: rgba(255, 100, 124, 0.22);
+}
+
+.log-card.bluff {
+  border-color: rgba(255, 100, 124, 0.3);
+}
+
+.log-card.probe {
+  border-color: rgba(113, 199, 255, 0.24);
+}

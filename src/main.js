@@ -230,7 +230,11 @@ function clueById(id) {
 }
 
 function addClue(id) {
-  if (!state.discoveredClues.includes(id)) state.discoveredClues.push(id)
+  const isNew = !state.discoveredClues.includes(id)
+  if (isNew) {
+    state.discoveredClues.push(id)
+    state.toast = `新线索已锁定：${clueById(id)?.title || id}`
+  }
 }
 
 function addLog(suspectId, kind, text, mode = 'rules') {
@@ -428,6 +432,55 @@ async function askTopic(topicId) {
   addLog(suspect.id, 'ask', `${topics.find((item) => item.id === topicId)?.label}\n${reply}`, hasUsableAIConfig() ? 'ai' : 'rules')
 
   if (suspect.id === 'chen' && s.phase === '动摇') addClue('evi_doorlog')
+  render()
+}
+
+function softProbe() {
+  const suspect = suspectById(state.currentSuspectId)
+  const s = suspectState[suspect.id]
+  s.attitude = Math.min(100, s.attitude + 4)
+  s.guard = Math.max(0, s.guard - 2)
+  updatePhase(s)
+  const text = suspect.id === 'lin'
+    ? '你故意放缓语气。林骁虽然还绷着，但敌意明显降了一点。'
+    : suspect.id === 'xu'
+      ? '你没有立刻追杀问题，许薇反而多给了半句没必要的解释。'
+      : '你先不逼陈默表态，他维持住体面，却也没立刻重新筑墙。'
+  addLog(suspect.id, 'probe', text)
+  toast('套话成功：对方稍微放松了戒备')
+  render()
+}
+
+function bluffSuspect() {
+  const suspect = suspectById(state.currentSuspectId)
+  const s = suspectState[suspect.id]
+  let success = false
+  let text = ''
+
+  if (suspect.id === 'chen' && (state.discoveredClues.includes('evi_doorlog') || state.discoveredClues.includes('evi_backup'))) {
+    success = true
+    s.stress = Math.min(100, s.stress + 14)
+    s.guard = Math.max(0, s.guard - 10)
+    addClue('evi_backup')
+    addBreakthrough(suspect.id, 'bluff')
+    text = '你故意说“我们已经拿到书房里那段关键录音了”。陈默没有反驳“有没有录音”，而是立刻质疑来源——这反应已经够说明问题。'
+  } else if (suspect.id === 'xu' && state.discoveredClues.includes('evi_coffee')) {
+    success = true
+    s.stress = Math.min(100, s.stress + 10)
+    s.guard = Math.max(0, s.guard - 8)
+    text = '你故意说楼下监控已经拍到她在等人。许薇眉心一紧，第一反应不是否认出现，而是否认“等的人不是陈默”。'
+  } else {
+    applyMisplayPenalty(s, suspect.id)
+    text = suspect.id === 'lin'
+      ? '你想诈他，但林骁立刻顶了回来：“少来这套，你手里真有东西早甩我脸上了。”'
+      : suspect.id === 'xu'
+        ? '许薇看了你一眼，冷冷地说：“虚张声势不算调查。”'
+        : '陈默甚至笑了一下：“诈唬在法庭上不算证据，在这里也一样。”'
+  }
+
+  updatePhase(s)
+  addLog(suspect.id, 'bluff', text)
+  toast(success ? '诈问命中：对方反应过快，露了口风' : '诈问失败：对方开始重新评估你手里的牌')
   render()
 }
 
@@ -646,6 +699,8 @@ function getDeductionHints() {
   if (state.discoveredClues.includes('evi_doorlog')) hints.push('时间线开始松动：陈默的离开时间和自述不一致。')
   if (state.discoveredClues.includes('evi_shoeprint')) hints.push('现场指向阳台：鞋印把“不是意外”往前推了一步。')
   if (state.discoveredClues.includes('evi_backup')) hints.push('认知破绽出现：有人知道录音不在电脑里。')
+  if (state.discoveredClues.includes('evi_coffee')) hints.push('许薇更像知道谁会动手的人，而不只是一个路过的人。')
+  if (state.discoveredClues.includes('evi_lens')) hints.push('林骁像是情绪噪音最大的人，但现场真正危险的克制感不太像他。')
   if (!hints.length) hints.push('先把陈默逼到“动摇”，门禁和阳台两条线才会冒出来。')
   return hints
 }
@@ -767,6 +822,13 @@ function renderInvestigation() {
             <div class="free-ask-row">
               <input id="free-ask-input" placeholder="比如：你为什么知道录音不在电脑里？" ${state.aiBusy ? 'disabled' : ''} />
               <button class="btn primary small-btn" data-action="free-ask" ${state.aiBusy ? 'disabled' : ''}>${state.aiBusy ? '思考中…' : '追问'}</button>
+            </div>
+          </div>
+          <div class="action-group">
+            <div class="panel-title small">试探</div>
+            <div class="chip-row">
+              <button class="chip" data-action="soft-probe">套话，先放低警觉</button>
+              <button class="chip danger-chip" data-action="bluff">诈问，赌他反应过快</button>
             </div>
           </div>
           <div class="action-group">
@@ -1000,6 +1062,8 @@ function bindEvents() {
       if (action === 'go-close' && isReadyToClose()) state.screen = 'close'
       if (action === 'ask-topic') await askTopic(id)
       if (action === 'free-ask') await freeAskAI()
+      if (action === 'soft-probe') softProbe()
+      if (action === 'bluff') bluffSuspect()
       if (action === 'pursue-lead') pursueLead(id)
       if (action === 'pressure') pressureSuspect()
       if (action === 'present-evidence') presentEvidence(id)
