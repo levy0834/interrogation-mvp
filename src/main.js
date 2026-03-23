@@ -462,7 +462,7 @@ function presentEvidence(evidenceId) {
 
   updatePhase(s)
   addLog(suspect.id, 'evidence', `你出示了【${clue.title}】。\n${reaction.text}`)
-  toast('命中破绽，新的矛盾已被记录')
+  toast('命中破绽：这一下打到要害了')
   render()
 }
 
@@ -683,6 +683,16 @@ function renderTopbar() {
   `
 }
 
+function deriveBehaviorTag(suspectId) {
+  const s = suspectState[suspectId]
+  if (s.phase === '崩溃') return '松口边缘'
+  if (s.guard <= 24) return '失言风险'
+  if (s.stress >= 60) return '情绪失衡'
+  if (s.attitude <= 30) return '反咬调查'
+  if (s.phase === '防御') return '高度回避'
+  return '表面镇定'
+}
+
 function renderInvestigation() {
   const suspect = suspectById(state.currentSuspectId)
   const s = suspectState[suspect.id]
@@ -696,7 +706,7 @@ function renderInvestigation() {
         <div class="panel-title">当前审讯对象</div>
         <h3>${suspect.name}</h3>
         <p>${suspect.role}</p>
-        <div class="status-pill ${s.phase}">${s.phase}</div>
+        <div class="status-row"><div class="status-pill ${s.phase}">${s.phase}</div><div class="behavior-tag">${deriveBehaviorTag(suspect.id)}</div></div>
         <div class="meter-list">
           <div><span>压力</span><strong>${s.stress}</strong></div>
           <div><span>防御</span><strong>${s.guard}</strong></div>
@@ -715,6 +725,7 @@ function renderInvestigation() {
       </aside>
       <section class="dialogue-panel">
         <div class="panel-title">审讯记录</div>
+        ${state.activeLead ? `<div class="hit-banner">已锁定破绽：${(availableLeads().find((item) => item.id === state.activeLead)?.label || "正在深挖关键矛盾")}</div>` : ""}
         <div class="log-stream">
           ${state.statementLog.length ? state.statementLog.map((entry) => `
             <article class="log-card ${entry.kind}">
