@@ -2,7 +2,7 @@ import './style.css'
 
 const STORAGE_KEY = 'interrogation-mvp-ai-config'
 const DEPLOY_MODE = 'proxy'
-const DEFAULT_MODEL = 'deepseek-chat'
+const DEFAULT_MODEL = ''
 const PROXY_API_BASE = ''
 
 const caseData = {
@@ -212,6 +212,10 @@ const evidenceReactions = {
 const app = document.querySelector('#app')
 
 function loadAIConfig() {
+  if (DEPLOY_MODE === 'proxy') {
+    return { ...defaultAIConfig }
+  }
+
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     return raw ? { ...defaultAIConfig, ...JSON.parse(raw) } : { ...defaultAIConfig }
@@ -221,6 +225,7 @@ function loadAIConfig() {
 }
 
 function saveAIConfig() {
+  if (DEPLOY_MODE === 'proxy') return
   localStorage.setItem(STORAGE_KEY, JSON.stringify(aiConfig))
 }
 
@@ -1085,15 +1090,18 @@ function escapeAttr(value) {
 }
 
 function readAIForm() {
-  const model = document.querySelector('#ai-model')?.value?.trim()
-  const temperature = document.querySelector('#ai-temperature')?.value?.trim()
-  const maxTokens = document.querySelector('#ai-max-tokens')?.value?.trim()
   aiConfig.baseUrl = DEPLOY_MODE
   aiConfig.apiKey = ''
-  aiConfig.model = model || aiConfig.model
-  aiConfig.temperature = temperature || aiConfig.temperature
-  aiConfig.maxTokens = maxTokens || aiConfig.maxTokens
   aiConfig.enabled = !!document.querySelector('#ai-enabled')?.checked
+
+  if (DEPLOY_MODE !== 'proxy') {
+    const model = document.querySelector('#ai-model')?.value?.trim()
+    const temperature = document.querySelector('#ai-temperature')?.value?.trim()
+    const maxTokens = document.querySelector('#ai-max-tokens')?.value?.trim()
+    aiConfig.model = model || aiConfig.model
+    aiConfig.temperature = temperature || aiConfig.temperature
+    aiConfig.maxTokens = maxTokens || aiConfig.maxTokens
+  }
 }
 
 async function testAIConnection() {
@@ -1103,10 +1111,8 @@ async function testAIConnection() {
   state.aiTestResult = ''
 
   const useProxy = aiConfig.baseUrl.trim() === 'proxy'
-  if ((!useProxy && (!aiConfig.baseUrl || !aiConfig.apiKey || !aiConfig.model)) || (useProxy && !aiConfig.model)) {
-    state.aiError = useProxy
-      ? '代理模式下至少要填 Model。'
-      : '当前部署应走代理模式；如果看到这条，说明本地旧配置脏了。'
+  if (!useProxy && (!aiConfig.baseUrl || !aiConfig.apiKey || !aiConfig.model)) {
+    state.aiError = '当前部署应走代理模式；如果看到这条，说明本地旧配置脏了。'
     render()
     return
   }
@@ -1139,7 +1145,7 @@ function bindEvents() {
         saveAIConfig()
         state.aiError = ''
         state.aiTestResult = ''
-        toast('AI 配置已保存在本机浏览器')
+        toast(DEPLOY_MODE === 'proxy' ? '已切换为仅使用服务端环境变量' : 'AI 配置已保存在本机浏览器')
       }
       if (action === 'test-ai-connection') await testAIConnection()
       if (action === 'pick-suspect') state.currentSuspectId = id
